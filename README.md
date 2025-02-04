@@ -1,5 +1,18 @@
-# Vue 3 + Vite
+# Inventory System Frontend
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This is the Vue.js frontend for the Inventory Management System.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Features
+- Manage inventory items and categories.
+- Vuetify
+- Axios for API communication.
+- Vue Router for navigation.
+
+## Setup
+1. Clone the repository:
+   git clone https://github.com/yourusername/inventory-system-frontend.git
+2. Install dependencies:
+    yarn install
+3. Start the dev server:
+    yarn dev
+4. http://localhost:5173/

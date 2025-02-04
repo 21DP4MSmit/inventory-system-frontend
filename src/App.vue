@@ -6,6 +6,7 @@
         <v-spacer></v-spacer>
         <v-btn to="/" text>Home</v-btn>
         <v-btn to="/inventory" text>Inventory</v-btn>
+        <v-btn to="/categories" text>Categories</v-btn>
       </v-app-bar>
 
       <router-view></router-view>
