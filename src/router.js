@@ -9,9 +9,21 @@ import DashboardView from "./views/DashboardView.vue";
 const routes = [
   { path: "/", component: HomePage, meta: { requiresAuth: false } },
   { path: "/login", component: LoginView, meta: { requiresAuth: false } },
-  { path: "/dashboard", component: DashboardView, meta: { requiresAuth: true } },
-  { path: "/inventory", component: InventoryView, meta: { requiresAuth: true } },
-  { path: "/categories", component: CategoryView, meta: { requiresAuth: true, requiresAdmin: true } },
+  {
+    path: "/dashboard",
+    component: DashboardView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/inventory",
+    component: InventoryView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/categories",
+    component: CategoryView,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
 ];
 
 const router = createRouter({
@@ -28,8 +40,7 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {
     next("/login");
-  }
-  else if (to.meta.requiresAdmin) {
+  } else if (to.meta.requiresAdmin) {
     // Allow both admin and staff to access categories, but restrict staff to view-only
     if (userStore.user?.role === "staff" && to.path === "/categories") {
       next();
@@ -39,11 +50,9 @@ router.beforeEach((to, from, next) => {
     } else {
       next();
     }
-  }
-  else {
+  } else {
     next();
   }
 });
-
 
 export default router;

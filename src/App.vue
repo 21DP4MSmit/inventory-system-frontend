@@ -1,9 +1,6 @@
 <template>
   <v-app theme="dark">
-    <SidebarLayout 
-      v-if="isAuthenticated" 
-      v-model="drawerOpen"
-    />
+    <SidebarLayout v-if="isAuthenticated" v-model="drawerOpen" />
     <v-main>
       <router-view />
     </v-main>
@@ -11,7 +8,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch } from "vue";
 import SidebarLayout from "./layouts/SidebarLayout.vue";
 import { useUserStore } from "./stores/user";
 
@@ -23,6 +20,6 @@ userStore.initialize();
 const isAuthenticated = computed(() => userStore.isAuthenticated);
 
 watch(drawerOpen, (newValue) => {
-  console.log('Drawer state changed:', newValue);
+  console.log("Drawer state changed:", newValue);
 });
 </script>

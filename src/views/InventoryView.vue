@@ -21,7 +21,9 @@
             </v-toolbar-title>
             <v-spacer></v-spacer>
             <v-btn
-              v-if="userStore.isAdmin || userStore.getUserInfo?.role === 'staff'"
+              v-if="
+                userStore.isAdmin || userStore.getUserInfo?.role === 'staff'
+              "
               color="primary"
               @click="openAddDialog"
               prepend-icon="mdi-plus"
@@ -58,7 +60,9 @@
     <v-dialog v-model="dialog" max-width="500px" persistent>
       <v-card>
         <v-card-title class="bg-primary text-white py-4">
-          <span class="text-h5">{{ isEditing ? "Edit Item" : "Add Item" }}</span>
+          <span class="text-h5">{{
+            isEditing ? "Edit Item" : "Add Item"
+          }}</span>
         </v-card-title>
 
         <v-card-text class="pt-4">
@@ -66,7 +70,7 @@
             <v-text-field
               v-model="formData.name"
               label="Item Name"
-              :rules="[v => !!v || 'Item name is required']"
+              :rules="[(v) => !!v || 'Item name is required']"
               required
               variant="outlined"
               density="comfortable"
@@ -79,7 +83,7 @@
               item-title="category_name"
               item-value="category_id"
               label="Select Category"
-              :rules="[v => !!v || 'Category is required']"
+              :rules="[(v) => !!v || 'Category is required']"
               required
               variant="outlined"
               density="comfortable"
@@ -90,7 +94,7 @@
               v-model="formData.quantity"
               label="Quantity"
               type="number"
-              :rules="[v => !!v || 'Quantity is required']"
+              :rules="[(v) => !!v || 'Quantity is required']"
               required
               variant="outlined"
               density="comfortable"
@@ -108,11 +112,7 @@
           >
             Cancel
           </v-btn>
-          <v-btn
-            color="primary"
-            @click="validateAndSubmit"
-            :loading="loading"
-          >
+          <v-btn color="primary" @click="validateAndSubmit" :loading="loading">
             {{ isEditing ? "Save Changes" : "Add Item" }}
           </v-btn>
         </v-card-actions>
@@ -122,10 +122,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useUserStore } from '../stores/user';
-import api from '../api.js';
+import { ref, reactive, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useUserStore } from "../stores/user";
+import api from "../api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -140,22 +140,22 @@ const loading = ref(false);
 
 const formData = reactive({
   item_id: null,
-  name: '',
+  name: "",
   category_id: null,
   quantity: null,
 });
 
 // Constants
 const headers = [
-  { title: 'Item Name', key: 'name', width: '40%' },
-  { title: 'Category', key: 'category_id', width: '25%' },
-  { title: 'Quantity', key: 'quantity', width: '20%' },
-  { title: 'Actions', key: 'actions', width: '15%', sortable: false },
+  { title: "Item Name", key: "name", width: "40%" },
+  { title: "Category", key: "category_id", width: "25%" },
+  { title: "Quantity", key: "quantity", width: "20%" },
+  { title: "Actions", key: "actions", width: "15%", sortable: false },
 ];
 
 const resetForm = () => {
   formData.item_id = null;
-  formData.name = '';
+  formData.name = "";
   formData.category_id = null;
   formData.quantity = null;
 };
@@ -169,18 +169,18 @@ const closeDialog = () => {
 const fetchItems = async () => {
   try {
     loading.value = true;
-    const token = localStorage.getItem('token');
-    const response = await api.get('/items', {
+    const token = localStorage.getItem("token");
+    const response = await api.get("/items", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     items.value = response.data;
   } catch (error) {
-    console.error('Error fetching inventory:', error);
+    console.error("Error fetching inventory:", error);
     if (error.response?.status === 401) {
       userStore.logout();
-      router.push('/login');
+      router.push("/login");
     }
   } finally {
     loading.value = false;
@@ -190,18 +190,18 @@ const fetchItems = async () => {
 const fetchCategories = async () => {
   try {
     loading.value = true;
-    const token = localStorage.getItem('token');
-    const response = await api.get('/categories', {
+    const token = localStorage.getItem("token");
+    const response = await api.get("/categories", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     categories.value = response.data;
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    console.error("Error fetching categories:", error);
     if (error.response?.status === 401) {
       userStore.logout();
-      router.push('/login');
+      router.push("/login");
     }
   } finally {
     loading.value = false;
@@ -220,13 +220,13 @@ const openEditDialog = (item) => {
     item_id: item.item_id,
     name: item.name,
     category_id: item.category_id,
-    quantity: item.quantity
+    quantity: item.quantity,
   });
   dialog.value = true;
 };
 
 const validateAndSubmit = async () => {
-  const { valid } = await formRef.value?.validate() || { valid: false };
+  const { valid } = (await formRef.value?.validate()) || { valid: false };
   if (valid) {
     if (isEditing.value) {
       await updateItem();
@@ -239,24 +239,24 @@ const validateAndSubmit = async () => {
 const addItem = async () => {
   try {
     loading.value = true;
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     const requestData = {
       name: formData.name,
       category_id: Number(formData.category_id),
       quantity: Number(formData.quantity),
     };
 
-    await api.post('/items', requestData, {
+    await api.post("/items", requestData, {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     closeDialog();
     await fetchItems();
   } catch (error) {
-    console.error('Error adding item:', error.response?.data || error);
+    console.error("Error adding item:", error.response?.data || error);
   } finally {
     loading.value = false;
   }
@@ -265,7 +265,7 @@ const addItem = async () => {
 const updateItem = async () => {
   try {
     loading.value = true;
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     const requestData = {
       name: formData.name,
       category_id: Number(formData.category_id),
@@ -281,7 +281,7 @@ const updateItem = async () => {
     closeDialog();
     await fetchItems();
   } catch (error) {
-    console.error('Error updating item:', error);
+    console.error("Error updating item:", error);
   } finally {
     loading.value = false;
   }
@@ -289,10 +289,10 @@ const updateItem = async () => {
 
 const deleteItem = async (item) => {
   if (!item?.item_id) return;
-  
+
   try {
     loading.value = true;
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     await api.delete(`/items/${item.item_id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -300,7 +300,7 @@ const deleteItem = async (item) => {
     });
     items.value = items.value.filter((i) => i.item_id !== item.item_id);
   } catch (error) {
-    console.error('Error deleting item:', error);
+    console.error("Error deleting item:", error);
   } finally {
     loading.value = false;
   }

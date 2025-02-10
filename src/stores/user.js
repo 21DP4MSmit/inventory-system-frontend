@@ -1,28 +1,28 @@
 // stores/user.js
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
 import api from "../api.js";
 
-export const useUserStore = defineStore('user', () => {
+export const useUserStore = defineStore("user", () => {
   const user = ref(null);
   const token = ref(null);
 
   const isAuthenticated = computed(() => !!token.value);
-  const isAdmin = computed(() => user.value?.role === 'admin');
+  const isAdmin = computed(() => user.value?.role === "admin");
   const getUserInfo = computed(() => user.value);
 
   async function login(credentials) {
     try {
-      const response = await api.post('/login', credentials);
+      const response = await api.post("/login", credentials);
       const { access_token, user: userData } = response.data;
-      
+
       token.value = access_token;
       user.value = userData; // Store the user data directly from response
-      
-      localStorage.setItem('token', access_token);
-      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+
+      localStorage.setItem("token", access_token);
+      api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       throw error;
     }
   }
@@ -30,8 +30,8 @@ export const useUserStore = defineStore('user', () => {
   function logout() {
     token.value = null;
     user.value = null;
-    localStorage.removeItem('token');
-    delete api.defaults.headers.common['Authorization'];
+    localStorage.removeItem("token");
+    delete api.defaults.headers.common["Authorization"];
   }
 
   function initialize() {
@@ -51,18 +51,20 @@ export const useUserStore = defineStore('user', () => {
       }
     }
   }
-  
+
   function decodeJWT(token) {
     try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
       const jsonPayload = decodeURIComponent(
-        atob(base64).split('').map(c => 
-          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
       );
       return JSON.parse(jsonPayload);
     } catch (error) {
-      console.error('Error decoding JWT:', error);
+      console.error("Error decoding JWT:", error);
       return null;
     }
   }

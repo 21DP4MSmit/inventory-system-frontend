@@ -58,7 +58,9 @@
     <v-dialog v-model="dialog" max-width="500px" persistent>
       <v-card>
         <v-card-title class="bg-primary text-white py-4">
-          <span class="text-h5">{{ isEditing ? "Edit Category" : "Add Category" }}</span>
+          <span class="text-h5">{{
+            isEditing ? "Edit Category" : "Add Category"
+          }}</span>
         </v-card-title>
 
         <v-card-text class="pt-4">
@@ -66,7 +68,7 @@
             <v-text-field
               v-model="formData.category_name"
               label="Category Name"
-              :rules="[v => !!v || 'Category name is required']"
+              :rules="[(v) => !!v || 'Category name is required']"
               required
               variant="outlined"
               density="comfortable"
@@ -84,11 +86,7 @@
           >
             Cancel
           </v-btn>
-          <v-btn
-            color="primary"
-            @click="validateAndSubmit"
-            :loading="loading"
-          >
+          <v-btn color="primary" @click="validateAndSubmit" :loading="loading">
             {{ isEditing ? "Save Changes" : "Add Category" }}
           </v-btn>
         </v-card-actions>
@@ -98,8 +96,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, computed, reactive } from "vue";
+import { useRouter } from "vue-router";
 import { useUserStore } from "../stores/user";
 import api from "../api.js";
 
@@ -173,7 +171,7 @@ const openEditDialog = (item) => {
 };
 
 const validateAndSubmit = async () => {
-  const { valid } = await formRef.value?.validate() || { valid: false };
+  const { valid } = (await formRef.value?.validate()) || { valid: false };
   if (valid) {
     if (isEditing.value) {
       await updateCategory();
@@ -187,14 +185,18 @@ const addCategory = async () => {
   try {
     loading.value = true;
     const token = localStorage.getItem("token");
-    const response = await api.post("/categories", {
-      category_name: formData.category_name
-    }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    const response = await api.post(
+      "/categories",
+      {
+        category_name: formData.category_name,
       },
-    });
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     await fetchCategories(); // Refresh the list
     closeDialog();
@@ -209,15 +211,19 @@ const updateCategory = async () => {
   try {
     loading.value = true;
     const token = localStorage.getItem("token");
-    await api.put(`/categories/${formData.category_id}`, {
-      category_name: formData.category_name
-    }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    await api.put(
+      `/categories/${formData.category_id}`,
+      {
+        category_name: formData.category_name,
       },
-    });
-    
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
     await fetchCategories(); // Refresh the list
     closeDialog();
   } catch (error) {
@@ -229,7 +235,7 @@ const updateCategory = async () => {
 
 const deleteCategory = async (item) => {
   if (!item?.category_id) return;
-  
+
   try {
     loading.value = true;
     const token = localStorage.getItem("token");
