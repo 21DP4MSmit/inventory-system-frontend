@@ -1,0 +1,182 @@
+<template>
+  <v-container>
+    <v-card elevation="2">
+      <data-table
+        title="Manage Users"
+        :headers="headers"
+        :items="users"
+        @add="openAddUserDialog"
+        @edit="editUser"
+        @delete="deleteUser"
+      />
+
+      <form-dialog
+        v-model="dialog"
+        :title="isEditing ? 'Edit User' : 'Add User'"
+        :loading="loading"
+        submit-button-text="Save"
+        @submit="validateAndSubmit"
+        @cancel="closeDialog"
+      >
+        <v-text-field
+          v-model="formData.username"
+          label="Username"
+          :rules="[(v) => !!v || 'Username is required']"
+          required
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+          :error-messages="errors.username"
+        ></v-text-field>
+
+        <v-select
+          v-model="formData.role"
+          :items="['admin', 'staff']"
+          label="Role"
+          :rules="[(v) => !!v || 'Role is required']"
+          required
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+          :error-messages="errors.role"
+        ></v-select>
+
+        <v-text-field
+          v-model="formData.password"
+          label="Password"
+          type="password"
+          :rules="[
+            isEditing ? () => true : (v) => !!v || 'Password is required',
+          ]"
+          :required="!isEditing"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+          :error-messages="errors.password"
+        ></v-text-field>
+      </form-dialog>
+    </v-card>
+  </v-container>
+</template>
+
+<script setup>
+import DataTable from "../components/DataTable.vue";
+import FormDialog from "../components/FormDialog.vue";
+import { ref, reactive, onMounted } from "vue";
+import api from "../api.js";
+
+const users = ref([]);
+const dialog = ref(false);
+const isEditing = ref(false);
+const loading = ref(false);
+const errors = reactive({});
+const formData = reactive({
+  user_id: null,
+  username: "",
+  role: "staff",
+  password: "",
+});
+
+const headers = [
+  { title: "Username", key: "username", width: "40%" },
+  { title: "Role", key: "role", width: "40%" },
+  { title: "Actions", key: "actions", width: "20%", sortable: false },
+];
+
+const fetchUsers = async () => {
+  try {
+    const response = await api.get("/users");
+    users.value = response.data;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+  }
+};
+
+const openAddUserDialog = () => {
+  isEditing.value = false;
+  formData.user_id = null;
+  formData.username = "";
+  formData.role = "staff";
+  formData.password = "";
+  clearErrors();
+  dialog.value = true;
+};
+
+const clearErrors = () => {
+  Object.keys(errors).forEach((key) => {
+    errors[key] = "";
+  });
+};
+
+const resetForm = () => {
+  formData.user_id = null;
+  formData.username = "";
+  formData.role = "staff";
+  formData.password = "";
+  clearErrors();
+};
+
+const closeDialog = () => {
+  dialog.value = false;
+  resetForm();
+};
+
+const editUser = (user) => {
+  isEditing.value = true;
+  Object.assign(formData, user);
+  clearErrors();
+  dialog.value = true;
+};
+
+const validateAndSubmit = async () => {
+  clearErrors();
+  if (isEditing.value) {
+    await updateUser();
+  } else {
+    await addUser();
+  }
+};
+
+const addUser = async () => {
+  try {
+    loading.value = true;
+    await api.post("/users", formData);
+    dialog.value = false;
+    await fetchUsers();
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      Object.assign(errors, error.response.data.errors);
+    }
+    console.error("Error adding user:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const updateUser = async () => {
+  try {
+    loading.value = true;
+    await api.put(`/users/${formData.user_id}`, formData);
+    dialog.value = false;
+    await fetchUsers();
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      Object.assign(errors, error.response.data.errors);
+    }
+    console.error("Error updating user:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const deleteUser = async (user) => {
+  try {
+    await api.delete(`/users/${user.user_id}`);
+    await fetchUsers();
+  } catch (error) {
+    console.error("Error deleting user:", error);
+  }
+};
+
+onMounted(fetchUsers);
+</script>

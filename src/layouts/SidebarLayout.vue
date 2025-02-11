@@ -112,32 +112,36 @@ const emit = defineEmits(["update:modelValue"]);
 const router = useRouter();
 const userStore = useUserStore();
 
-// Local state
+// Local states and computed properties
 const rail = ref(false);
 const previousDrawerState = ref(true);
 
-// Computed property for v-model binding
 const isDrawerOpen = computed({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value),
 });
 
-const menuItems = [
-  { title: "Dashboard", path: "/dashboard", icon: "mdi-view-dashboard" },
-  { title: "Inventory", path: "/inventory", icon: "mdi-clipboard-list" },
-  { title: "Categories", path: "/categories", icon: "mdi-tag" },
-];
-
 const userInfo = computed(() => userStore.getUserInfo);
 
-// Handle rail state updates
-const handleRailUpdate = (value) => {
-  rail.value = value;
-  if (!value) {
-    isDrawerOpen.value = previousDrawerState.value;
-  }
-};
+const menuItems = computed(() => {
+  const items = [
+    { title: "Dashboard", path: "/dashboard", icon: "mdi-view-dashboard" },
+    { title: "Inventory", path: "/inventory", icon: "mdi-clipboard-list" },
+    { title: "Categories", path: "/categories", icon: "mdi-tag" },
+  ];
 
+  if (userInfo.value?.role === "admin") {
+    items.push({
+      title: "Admin Panel",
+      path: "/admin",
+      icon: "mdi-shield-account",
+    });
+  }
+
+  return items;
+});
+
+// Handlers for rail and drawer state
 const toggleRail = () => {
   if (rail.value) {
     rail.value = false;
@@ -149,6 +153,13 @@ const toggleRail = () => {
   }
 };
 
+const handleRailUpdate = (value) => {
+  rail.value = value;
+  if (!value) {
+    isDrawerOpen.value = previousDrawerState.value;
+  }
+};
+
 const handleWarehouseClick = () => {
   if (rail.value) {
     rail.value = false;
@@ -156,6 +167,7 @@ const handleWarehouseClick = () => {
   }
 };
 
+// Navigation functions
 const goToProfile = () => {
   router.push("/profile");
 };

@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useUserStore } from "./stores/user";
+
 import HomePage from "./views/HomePage.vue";
 import LoginView from "./views/LoginView.vue";
 import InventoryView from "./views/InventoryView.vue";
 import CategoryView from "./views/CategoryView.vue";
 import DashboardView from "./views/DashboardView.vue";
+import AdminPanelView from "./views/AdminPanelView.vue";
 
 const routes = [
   { path: "/", component: HomePage, meta: { requiresAuth: false } },
@@ -22,7 +24,12 @@ const routes = [
   {
     path: "/categories",
     component: CategoryView,
-    meta: { requiresAuth: true, requiresAdmin: true },
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/admin",
+    component: AdminPanelView,
+    meta: { requiresAdmin: true },
   },
 ];
 
@@ -39,20 +46,20 @@ router.beforeEach((to, from, next) => {
   }
 
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {
-    next("/login");
-  } else if (to.meta.requiresAdmin) {
-    // Allow both admin and staff to access categories, but restrict staff to view-only
+    return next("/login");
+  }
+
+  // Check for admin-specific access
+  if (to.meta.requiresAdmin) {
     if (userStore.user?.role === "staff" && to.path === "/categories") {
-      next();
+      return next();
     } else if (!userStore.isAdmin) {
       console.log("Access denied. Redirecting to dashboard.");
-      next("/dashboard");
-    } else {
-      next();
+      return next("/dashboard");
     }
-  } else {
-    next();
   }
+
+  next();
 });
 
 export default router;
