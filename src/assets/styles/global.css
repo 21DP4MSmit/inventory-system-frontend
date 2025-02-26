@@ -10,19 +10,36 @@
   --background-light: #363b47; /* Lighter Navy */
   --text-primary: #ffffff;
   --text-secondary: #b0bec5;
+
+  /* New variables */
+  --card-border-radius: 12px;
+  --btn-border-radius: 8px;
+  --transition-speed: 0.3s;
 }
 
 /* Dark theme styles */
 .v-application {
   background-color: var(--secondary-color) !important;
+  font-family: "Roboto", sans-serif;
 }
 
+/* Card styling */
 .v-card {
   background-color: var(--surface-color) !important;
+  border-radius: var(--card-border-radius) !important;
+  transition: all var(--transition-speed) ease;
 }
 
 .v-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Button styling */
+.v-btn {
+  border-radius: var(--btn-border-radius) !important;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  transition: all var(--transition-speed) ease !important;
 }
 
 .v-btn--elevated {
@@ -31,12 +48,25 @@
 
 .v-btn--elevated:hover {
   background-color: var(--accent-color) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.v-btn--text:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Dialog styling */
+.v-dialog .v-card {
+  overflow: hidden;
 }
 
 .v-dialog .v-card-title {
   background-color: var(--primary-color) !important;
+  padding: 16px 24px !important;
 }
 
+/* Sidebar styling */
 .sidebar-gradient {
   background: linear-gradient(
     145deg,
@@ -48,13 +78,31 @@
 .active-nav-item {
   background: var(--primary-color) !important;
   color: var(--text-primary) !important;
+  border-left: 4px solid var(--accent-color) !important;
 }
 
 .v-list-item:hover {
   background: rgba(124, 77, 255, 0.1) !important;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-speed) ease;
 }
 
+/* Text and Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.text-h1,
+.text-h2,
+.text-h3,
+.text-h4,
+.text-h5,
+.text-h6 {
+  letter-spacing: -0.5px;
+}
+
+/* Background and Gradients */
 .bg-gradient {
   background: linear-gradient(
     145deg,
@@ -63,26 +111,66 @@
   ) !important;
 }
 
-.v-card-title {
-  color: var(--text-primary);
-}
-
-.v-card-subtitle {
-  color: var(--text-secondary);
-}
-
+/* Data Tables */
 .v-data-table {
   background-color: var(--surface-color) !important;
+  border-radius: 0 0 var(--card-border-radius) var(--card-border-radius) !important;
 }
 
+.v-data-table-header {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.v-data-table-header th {
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.v-data-table__tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Toolbar */
 .v-toolbar {
   background-color: var(--background-light) !important;
+  border-radius: var(--card-border-radius) var(--card-border-radius) 0 0 !important;
 }
 
+/* Input Fields */
+.v-field {
+  border-radius: 8px !important;
+  transition: all var(--transition-speed) ease;
+}
+
+.v-field--focused {
+  box-shadow: 0 0 0 2px var(--primary-color) !important;
+}
+
+/* Animations */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition-speed) ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Border utilities */
 .border-b {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-.v-dialog .bg-primary {
-  background-color: var(--primary-color) !important;
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .v-card-title {
+    font-size: 1.25rem !important;
+  }
+
+  .v-toolbar-title {
+    font-size: 1rem !important;
+  }
 }

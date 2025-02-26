@@ -1,27 +1,73 @@
-<!-- LoginView.vue -->
 <template>
   <v-container class="fill-height d-flex align-center justify-center">
-    <v-card class="pa-6" width="400">
-      <v-card-title class="text-h5">Login</v-card-title>
-      <v-card-text>
+    <v-card class="login-card mx-auto" max-width="450" elevation="3">
+      <div class="login-header pa-6 text-center">
+        <v-icon size="56" color="white" class="mb-2">mdi-warehouse</v-icon>
+        <h1 class="text-h4 font-weight-bold text-white mb-1">
+          Inventory System
+        </h1>
+        <p class="text-subtitle-1 text-white opacity-80">
+          Sign in to your account
+        </p>
+      </div>
+
+      <v-card-text class="pt-6 pb-4 px-6">
         <v-form @submit.prevent="handleLogin">
           <v-text-field
             v-model="username"
             label="Username"
+            prepend-inner-icon="mdi-account"
+            variant="outlined"
+            class="mb-3"
+            :error-messages="usernameError"
+            @input="usernameError = ''"
+            autocomplete="username"
             required
           ></v-text-field>
+
           <v-text-field
             v-model="password"
             label="Password"
-            type="password"
+            prepend-inner-icon="mdi-lock"
+            variant="outlined"
+            :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+            :type="showPassword ? 'text' : 'password'"
+            @click:append-inner="showPassword = !showPassword"
+            class="mb-6"
+            :error-messages="passwordError"
+            @input="passwordError = ''"
+            autocomplete="current-password"
             required
           ></v-text-field>
-          <v-btn type="submit" block color="primary" :loading="loading"
-            >Login</v-btn
+
+          <v-btn
+            type="submit"
+            block
+            color="primary"
+            size="large"
+            :loading="loading"
+            class="mb-4 text-none"
           >
+            Sign In
+          </v-btn>
         </v-form>
+
+        <v-alert
+          v-if="error"
+          type="error"
+          variant="tonal"
+          class="mt-4"
+          closable
+        >
+          {{ error }}
+        </v-alert>
       </v-card-text>
-      <v-alert v-if="error" type="error" class="mt-3">{{ error }}</v-alert>
+
+      <v-card-actions class="pa-6 pt-0">
+        <v-btn variant="text" block @click="goToHome" class="text-none">
+          Go back to home page
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-container>
 </template>
@@ -38,26 +84,66 @@ const username = ref("");
 const password = ref("");
 const error = ref(null);
 const loading = ref(false);
+const showPassword = ref(false);
+const usernameError = ref("");
+const passwordError = ref("");
 
 async function handleLogin() {
+  // Reset errors
+  error.value = null;
+  usernameError.value = "";
+  passwordError.value = "";
+
+  // Basic validation
+  if (!username.value) {
+    usernameError.value = "Username is required";
+    return;
+  }
+
+  if (!password.value) {
+    passwordError.value = "Password is required";
+    return;
+  }
+
   try {
     loading.value = true;
-    error.value = null;
     await userStore.login({
       username: username.value,
       password: password.value,
     });
     router.push("/dashboard");
   } catch (err) {
-    error.value = err.response?.data?.error || "An error occurred";
+    error.value = err.response?.data?.error || "Invalid username or password";
   } finally {
     loading.value = false;
   }
+}
+
+function goToHome() {
+  router.push("/");
 }
 </script>
 
 <style scoped>
 .fill-height {
-  height: 100vh;
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    var(--secondary-color),
+    var(--surface-color)
+  );
+}
+
+.login-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.login-header {
+  background: linear-gradient(
+    145deg,
+    var(--primary-color),
+    var(--accent-color)
+  );
 }
 </style>
