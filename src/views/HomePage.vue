@@ -30,6 +30,7 @@
                   size="large"
                   class="text-none"
                   prepend-icon="mdi-information-outline"
+                  @click="showFeatures = true"
                 >
                   Learn More
                 </v-btn>
@@ -74,6 +75,7 @@
         class="inventory-table"
         :loading="loading"
         loading-text="Loading stock data..."
+        :items-per-page="5"
       >
         <template v-slot:item.quantity="{ item }">
           <v-chip
@@ -83,6 +85,30 @@
           >
             {{ item.quantity }}
           </v-chip>
+        </template>
+
+        <template v-slot:item.category_name="{ item }">
+          <v-chip variant="tonal" size="small" class="font-weight-medium">
+            {{ item.category_name }}
+          </v-chip>
+        </template>
+
+        <template v-slot:item.updated_at="{ item }">
+          {{ formatDate(item.updated_at) }}
+        </template>
+
+        <template v-slot:bottom>
+          <div class="text-center pt-2 pb-2">
+            <v-btn
+              variant="tonal"
+              color="primary"
+              class="text-none"
+              prepend-icon="mdi-login"
+              @click="goToLogin"
+            >
+              Login to view full inventory
+            </v-btn>
+          </div>
         </template>
 
         <template v-slot:no-data>
@@ -95,69 +121,170 @@
         </template>
       </v-data-table>
     </v-card>
+
+    <!-- Features Dialog -->
+    <v-dialog v-model="showFeatures" max-width="700">
+      <v-card>
+        <v-card-title class="py-4 px-6 bg-primary text-white">
+          <v-icon class="mr-2">mdi-information-outline</v-icon>
+          Key Features
+          <v-spacer></v-spacer>
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-row>
+            <v-col
+              cols="12"
+              md="6"
+              v-for="(feature, index) in features"
+              :key="index"
+            >
+              <div class="d-flex mb-4">
+                <v-avatar color="primary" class="mr-4">
+                  <v-icon color="white">{{ feature.icon }}</v-icon>
+                </v-avatar>
+                <div>
+                  <h3 class="text-subtitle-1 font-weight-bold mb-1">
+                    {{ feature.title }}
+                  </h3>
+                  <p class="text-body-2">{{ feature.description }}</p>
+                </div>
+              </div>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions class="pa-6 pt-0">
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="goToLogin" class="text-none">
+            Get Started
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useNotificationStore } from "../stores/notification";
 import api from "../api.js";
 
-export default {
-  data() {
-    return {
-      stockItems: [],
-      search: "",
-      loading: true,
-      headers: [
-        { title: "Item Name", key: "name", sortable: true },
-        { title: "Category", key: "category_name", sortable: true },
-        { title: "Quantity", key: "quantity", sortable: true, align: "center" },
-        { title: "Last Updated", key: "updated_at", sortable: true },
-      ],
-    };
+const router = useRouter();
+const notificationStore = useNotificationStore();
+
+const stockItems = ref([]);
+const categories = ref([]);
+const search = ref("");
+const loading = ref(true);
+const showFeatures = ref(false);
+
+const headers = [
+  { title: "Item Name", key: "name", sortable: true },
+  { title: "Category", key: "category_name", sortable: true },
+  { title: "Quantity", key: "quantity", sortable: true, align: "center" },
+  { title: "Last Updated", key: "updated_at", sortable: true },
+];
+
+const features = [
+  {
+    icon: "mdi-clipboard-check-outline",
+    title: "Real-time Inventory Tracking",
+    description:
+      "Monitor stock levels instantly with automatic updates as items move in and out.",
   },
-
-  async created() {
-    await this.fetchStock();
+  {
+    icon: "mdi-tag-multiple",
+    title: "Category Management",
+    description:
+      "Organize your inventory with custom categories for easy filtering and reporting.",
   },
-
-  methods: {
-    async fetchStock() {
-      try {
-        const response = await api.get("/items");
-        // temp
-        this.stockItems = response.data.map((item) => ({
-          ...item,
-          category_name: this.getCategoryName(item.category_id),
-          updated_at: new Date().toLocaleDateString(),
-        }));
-      } catch (error) {
-        console.error("Error fetching stock:", error.response?.data || error);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    getCategoryName(categoryId) {
-      // temp
-      const categories = {
-        1: "Electronics",
-        2: "Office Supplies",
-        3: "Furniture",
-      };
-      return categories[categoryId] || `Category ${categoryId}`;
-    },
-
-    getQuantityColor(quantity) {
-      if (quantity <= 5) return "error";
-      if (quantity <= 20) return "warning";
-      return "success";
-    },
-
-    goToLogin() {
-      this.$router.push("/login");
-    },
+  {
+    icon: "mdi-chart-bar",
+    title: "Visual Analytics",
+    description:
+      "Get insights into inventory trends with interactive charts and reports.",
   },
+  {
+    icon: "mdi-bell-outline",
+    title: "Low Stock Alerts",
+    description:
+      "Receive notifications when items are running low to prevent stockouts.",
+  },
+  {
+    icon: "mdi-history",
+    title: "Transaction History",
+    description:
+      "Track all inventory movements with detailed transaction logs.",
+  },
+  {
+    icon: "mdi-account-group",
+    title: "User Roles",
+    description:
+      "Control access with customizable permissions for different team members.",
+  },
+];
+
+const fetchStock = async () => {
+  try {
+    loading.value = true;
+
+    await fetchCategories();
+
+    const response = await api.get("/items");
+    stockItems.value = response.data.map((item) => ({
+      ...item,
+      category_name: getCategoryName(item.category_id),
+      updated_at: item.updated_at || new Date().toISOString(),
+    }));
+  } catch (error) {
+    console.error("Error fetching stock:", error.response?.data || error);
+    notificationStore.error("Could not load inventory data");
+  } finally {
+    loading.value = false;
+  }
 };
+
+const fetchCategories = async () => {
+  try {
+    const response = await api.get("/categories");
+    categories.value = response.data;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
+};
+
+const getCategoryName = (categoryId) => {
+  const category = categories.value.find((c) => c.category_id === categoryId);
+  if (category) return category.category_name;
+};
+
+const getQuantityColor = (quantity) => {
+  if (quantity <= 5) return "error";
+  if (quantity <= 20) return "warning";
+  return "success";
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch (e) {
+    return dateString;
+  }
+};
+
+const goToLogin = () => {
+  router.push("/login");
+};
+
+onMounted(async () => {
+  await fetchStock();
+});
 </script>
 
 <style scoped>
@@ -186,5 +313,14 @@ export default {
   .search-field {
     max-width: 100% !important;
   }
+}
+
+.v-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.v-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
 }
 </style>

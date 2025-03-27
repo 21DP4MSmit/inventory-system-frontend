@@ -8,18 +8,21 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor to inject the token
 api.interceptors.request.use(
   (config) => {
-    const userStore = useUserStore();
-    const token = userStore.token || localStorage.getItem("token");
+    const publicRoutes = ['/items', '/categories'];
+    const isPublicRoute = publicRoutes.some(route => config.url.includes(route) && config.method === 'get');
+    
+    if (!isPublicRoute) {
+      const userStore = useUserStore();
+      const token = userStore.token || localStorage.getItem("token");
 
-    if (token && !config.headers.Authorization) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
-
   (error) => Promise.reject(error)
 );
 
