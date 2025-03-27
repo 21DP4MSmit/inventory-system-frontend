@@ -76,9 +76,11 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "../stores/user";
+import { useNotificationStore } from "../stores/notification";
 
 const router = useRouter();
 const userStore = useUserStore();
+const notificationStore = useNotificationStore();
 
 const username = ref("");
 const password = ref("");
@@ -88,20 +90,28 @@ const showPassword = ref(false);
 const usernameError = ref("");
 const passwordError = ref("");
 
-async function handleLogin() {
-  // Reset errors
+const validateForm = () => {
   error.value = null;
   usernameError.value = "";
   passwordError.value = "";
 
-  // Basic validation
+  let isValid = true;
+
   if (!username.value) {
     usernameError.value = "Username is required";
-    return;
+    isValid = false;
   }
 
   if (!password.value) {
     passwordError.value = "Password is required";
+    isValid = false;
+  }
+
+  return isValid;
+};
+
+async function handleLogin() {
+  if (!validateForm()) {
     return;
   }
 
@@ -111,9 +121,11 @@ async function handleLogin() {
       username: username.value,
       password: password.value,
     });
+    notificationStore.success(`Welcome back, ${username.value}!`);
     router.push("/dashboard");
   } catch (err) {
     error.value = err.response?.data?.error || "Invalid username or password";
+    notificationStore.error("Login failed: " + error.value);
   } finally {
     loading.value = false;
   }

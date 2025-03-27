@@ -11,19 +11,16 @@
   --text-primary: #ffffff;
   --text-secondary: #b0bec5;
 
-  /* New variables */
   --card-border-radius: 12px;
   --btn-border-radius: 8px;
   --transition-speed: 0.3s;
 }
 
-/* Dark theme styles */
 .v-application {
   background-color: var(--secondary-color) !important;
   font-family: "Roboto", sans-serif;
 }
 
-/* Card styling */
 .v-card {
   background-color: var(--surface-color) !important;
   border-radius: var(--card-border-radius) !important;
@@ -34,7 +31,6 @@
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Button styling */
 .v-btn {
   border-radius: var(--btn-border-radius) !important;
   letter-spacing: 0.5px;
@@ -56,7 +52,6 @@
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Dialog styling */
 .v-dialog .v-card {
   overflow: hidden;
 }
@@ -66,7 +61,6 @@
   padding: 16px 24px !important;
 }
 
-/* Sidebar styling */
 .sidebar-gradient {
   background: linear-gradient(
     145deg,
@@ -86,7 +80,6 @@
   transition: background-color var(--transition-speed) ease;
 }
 
-/* Text and Typography */
 h1,
 h2,
 h3,
@@ -102,7 +95,6 @@ h6,
   letter-spacing: -0.5px;
 }
 
-/* Background and Gradients */
 .bg-gradient {
   background: linear-gradient(
     145deg,
@@ -111,7 +103,6 @@ h6,
   ) !important;
 }
 
-/* Data Tables */
 .v-data-table {
   background-color: var(--surface-color) !important;
   border-radius: 0 0 var(--card-border-radius) var(--card-border-radius) !important;
@@ -132,13 +123,11 @@ h6,
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Toolbar */
 .v-toolbar {
   background-color: var(--background-light) !important;
   border-radius: var(--card-border-radius) var(--card-border-radius) 0 0 !important;
 }
 
-/* Input Fields */
 .v-field {
   border-radius: 8px !important;
   transition: all var(--transition-speed) ease;
@@ -148,7 +137,6 @@ h6,
   box-shadow: 0 0 0 2px var(--primary-color) !important;
 }
 
-/* Animations */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity var(--transition-speed) ease;
@@ -159,12 +147,10 @@ h6,
   opacity: 0;
 }
 
-/* Border utilities */
 .border-b {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Responsive adjustments */
 @media (max-width: 600px) {
   .v-card-title {
     font-size: 1.25rem !important;

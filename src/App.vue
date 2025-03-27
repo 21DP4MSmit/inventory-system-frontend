@@ -4,12 +4,14 @@
     <v-main>
       <router-view />
     </v-main>
+    <NotificationSystem />
   </v-app>
 </template>
 
 <script setup>
 import { ref, computed, watch } from "vue";
 import SidebarLayout from "./layouts/SidebarLayout.vue";
+import NotificationSystem from "./components/NotificationSystem.vue";
 import { useUserStore } from "./stores/user";
 
 const drawerOpen = ref(true);

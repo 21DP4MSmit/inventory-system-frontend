@@ -112,7 +112,6 @@ const emit = defineEmits(["update:modelValue"]);
 const router = useRouter();
 const userStore = useUserStore();
 
-// Local states and computed properties
 const rail = ref(false);
 const previousDrawerState = ref(true);
 
@@ -127,6 +126,7 @@ const menuItems = computed(() => {
   const items = [
     { title: "Dashboard", path: "/dashboard", icon: "mdi-view-dashboard" },
     { title: "Inventory", path: "/inventory", icon: "mdi-clipboard-list" },
+    { title: "Transactions", path: "/transactions", icon: "mdi-history" },
     { title: "Categories", path: "/categories", icon: "mdi-tag" },
   ];
 
@@ -141,7 +141,6 @@ const menuItems = computed(() => {
   return items;
 });
 
-// Handlers for rail and drawer state
 const toggleRail = () => {
   if (rail.value) {
     rail.value = false;
@@ -167,7 +166,6 @@ const handleWarehouseClick = () => {
   }
 };
 
-// Navigation functions
 const goToProfile = () => {
   router.push("/profile");
 };

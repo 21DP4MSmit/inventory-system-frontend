@@ -1,7 +1,7 @@
-// stores/user.js
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import api from "../api.js";
+import { useNotificationStore } from "./notification";
 
 export const useUserStore = defineStore("user", () => {
   const user = ref(null);
@@ -17,10 +17,12 @@ export const useUserStore = defineStore("user", () => {
       const { access_token, user: userData } = response.data;
 
       token.value = access_token;
-      user.value = userData; // Store the user data directly from response
+      user.value = userData;
 
       localStorage.setItem("token", access_token);
       api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+
+      return userData;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -28,10 +30,17 @@ export const useUserStore = defineStore("user", () => {
   }
 
   function logout() {
+    const notificationStore = useNotificationStore();
+    const username = user.value?.username;
+
     token.value = null;
     user.value = null;
     localStorage.removeItem("token");
     delete api.defaults.headers.common["Authorization"];
+
+    if (username) {
+      notificationStore.info(`Goodbye, ${username}! You've been logged out.`);
+    }
   }
 
   function initialize() {

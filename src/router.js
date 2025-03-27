@@ -7,6 +7,7 @@ import InventoryView from "./views/InventoryView.vue";
 import CategoryView from "./views/CategoryView.vue";
 import DashboardView from "./views/DashboardView.vue";
 import AdminPanelView from "./views/AdminPanelView.vue";
+import TransactionView from "./views/TransactionView.vue";
 
 const routes = [
   { path: "/", component: HomePage, meta: { requiresAuth: false } },
@@ -24,6 +25,11 @@ const routes = [
   {
     path: "/categories",
     component: CategoryView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/transactions",
+    component: TransactionView,
     meta: { requiresAuth: true },
   },
   {
@@ -49,7 +55,6 @@ router.beforeEach((to, from, next) => {
     return next("/login");
   }
 
-  // Check for admin-specific access
   if (to.meta.requiresAdmin) {
     if (userStore.user?.role === "staff" && to.path === "/categories") {
       return next();
