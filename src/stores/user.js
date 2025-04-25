@@ -6,10 +6,26 @@ import { useNotificationStore } from "./notification";
 export const useUserStore = defineStore("user", () => {
   const user = ref(null);
   const token = ref(null);
+  const permissions = ref([]);
 
   const isAuthenticated = computed(() => !!token.value);
   const isAdmin = computed(() => user.value?.role === "admin");
   const getUserInfo = computed(() => user.value);
+
+  const hasPermission = computed(() => (permission) => {
+    return permissions.value.includes(permission);
+  });
+
+  async function fetchPermissions() {
+    try {
+      const response = await api.get("/permissions");
+      permissions.value = response.data.permissions;
+      return permissions.value;
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+      return [];
+    }
+  }
 
   async function login(credentials) {
     try {
@@ -21,6 +37,8 @@ export const useUserStore = defineStore("user", () => {
 
       localStorage.setItem("token", access_token);
       api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+
+      await fetchPermissions();
 
       return userData;
     } catch (error) {
@@ -35,6 +53,7 @@ export const useUserStore = defineStore("user", () => {
 
     token.value = null;
     user.value = null;
+    permissions.value = [];
     localStorage.removeItem("token");
     delete api.defaults.headers.common["Authorization"];
 
@@ -43,7 +62,7 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  function initialize() {
+  async function initialize() {
     const savedToken = localStorage.getItem("token");
     if (savedToken) {
       token.value = savedToken;
@@ -52,6 +71,7 @@ export const useUserStore = defineStore("user", () => {
         const decodedUser = decodeJWT(savedToken);
         if (decodedUser && decodedUser.role) {
           user.value = decodedUser;
+          await fetchPermissions();
         } else {
           logout();
         }
@@ -81,11 +101,14 @@ export const useUserStore = defineStore("user", () => {
   return {
     user,
     token,
+    permissions,
     isAuthenticated,
     isAdmin,
     getUserInfo,
+    hasPermission,
     login,
     logout,
     initialize,
+    fetchPermissions,
   };
 });

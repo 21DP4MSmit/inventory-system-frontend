@@ -128,6 +128,8 @@ const menuItems = computed(() => {
     { title: "Inventory", path: "/inventory", icon: "mdi-clipboard-list" },
     { title: "Transactions", path: "/transactions", icon: "mdi-history" },
     { title: "Categories", path: "/categories", icon: "mdi-tag" },
+    { title: "Reports", path: "/reports", icon: "mdi-file-chart" },
+    { title: "AI Detection", path: "/ai-detection", icon: "mdi-image-search" },
   ];
 
   if (userInfo.value?.role === "admin") {

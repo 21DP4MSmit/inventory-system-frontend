@@ -207,9 +207,23 @@ const props = defineProps({
     type: String,
     default: "mdi-alert-circle-outline",
   },
+  serverSidePagination: {
+    type: Boolean,
+    default: false
+  },
+  totalItems: {
+    type: Number,
+    default: 0
+  },
+  onPageChange: {
+    type: Function,
+    default: () => {}
+  }
 });
 
 const emit = defineEmits(["add", "edit", "delete"]);
+const page = ref(1);
+const itemsPerPage = ref(props.itemsPerPage);
 
 const search = ref("");
 const deleteDialog = ref(false);
@@ -224,6 +238,13 @@ function handleDelete() {
   emit("delete", itemToDelete.value);
   deleteDialog.value = false;
   itemToDelete.value = null;
+}
+
+function handlePageChange(newPage) {
+  page.value = newPage;
+  if (props.serverSidePagination) {
+    emit('pageChange', { page: newPage, itemsPerPage: itemsPerPage.value });
+  }
 }
 </script>
 

@@ -8,6 +8,8 @@ import CategoryView from "./views/CategoryView.vue";
 import DashboardView from "./views/DashboardView.vue";
 import AdminPanelView from "./views/AdminPanelView.vue";
 import TransactionView from "./views/TransactionView.vue";
+import AIDetectionView from "./views/AIDetectionView.vue";
+import ReportsView from "./views/ReportsView.vue";
 
 const routes = [
   { path: "/", component: HomePage, meta: { requiresAuth: false } },
@@ -15,27 +17,37 @@ const routes = [
   {
     path: "/dashboard",
     component: DashboardView,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiredPermission: "view_dashboard" },
   },
   {
     path: "/inventory",
     component: InventoryView,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiredPermission: "view_inventory" },
   },
   {
     path: "/categories",
     component: CategoryView,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiredPermission: "view_categories" },
   },
   {
     path: "/transactions",
     component: TransactionView,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiredPermission: "view_transactions" },
   },
   {
     path: "/admin",
     component: AdminPanelView,
-    meta: { requiresAdmin: true },
+    meta: { requiresAuth: true, requiredPermission: "view_users" },
+  },
+  {
+    path: "/ai-detection",
+    component: AIDetectionView,
+    meta: { requiresAuth: true, requiredPermission: "use_ai_detection" },
+  },
+  {
+    path: "/reports",
+    component: ReportsView,
+    meta: { requiresAuth: true, requiredPermission: "view_reports" },
   },
 ];
 
@@ -44,24 +56,37 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
 
   if (!userStore.isAuthenticated) {
-    userStore.initialize();
+    await userStore.initialize();
   }
 
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {
     return next("/login");
   }
 
-  if (to.meta.requiresAdmin) {
-    if (userStore.user?.role === "staff" && to.path === "/categories") {
-      return next();
-    } else if (!userStore.isAdmin) {
-      console.log("Access denied. Redirecting to dashboard.");
-      return next("/dashboard");
+  if (
+    to.meta.requiredPermission &&
+    !userStore.hasPermission(to.meta.requiredPermission)
+  ) {
+    if (userStore.isAuthenticated) {
+      if (to.path !== "/dashboard") {
+        return next("/dashboard");
+      } else {
+        return next();
+      }
+    } else {
+      return next("/login");
     }
+  }
+
+  if (
+    (to.path === "/login" || to.path === "/register") &&
+    userStore.isAuthenticated
+  ) {
+    return next("/dashboard");
   }
 
   next();
