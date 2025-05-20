@@ -704,7 +704,13 @@ const submitQuickTransaction = async () => {
   }
 };
 
-watch(chartPeriod, () => {});
+watch(chartPeriod, () => {
+  if (chartData.value) {
+    setTimeout(() => {
+      createChart();
+    }, 100);
+  }
+});
 
 onMounted(async () => {
   await fetchData();

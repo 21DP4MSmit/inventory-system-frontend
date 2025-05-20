@@ -1,12 +1,15 @@
 <template>
   <div class="data-table-wrapper">
     <v-data-table
+      v-model="selected"
       :headers="headers"
       :items="items"
       :items-per-page="itemsPerPage"
       :search="search"
       :loading="loading"
       :loading-text="loadingText"
+      :show-select="showSelection"
+      :item-value="itemValuePath"
       class="elevation-0 rounded-table"
       density="comfortable"
     >
@@ -27,6 +30,50 @@
               {{ items.length }}
             </v-chip>
           </v-toolbar-title>
+
+          <!-- Batch actions toolbar -->
+          <v-slide-x-transition>
+            <div
+              v-if="showSelection && selected.length > 0"
+              class="d-flex align-center ml-4"
+            >
+              <v-chip color="primary" size="small" class="mr-3">
+                {{ selected.length }} selected
+              </v-chip>
+
+              <v-btn
+                color="primary"
+                variant="tonal"
+                size="small"
+                class="mr-2 text-none"
+                @click="$emit('batchEdit', getSelectedItems())"
+              >
+                <v-icon size="small" class="mr-1">mdi-pencil</v-icon>
+                Edit
+              </v-btn>
+
+              <v-btn
+                color="error"
+                variant="tonal"
+                size="small"
+                class="mr-2 text-none"
+                @click="confirmBatchDelete"
+              >
+                <v-icon size="small" class="mr-1">mdi-delete</v-icon>
+                Delete
+              </v-btn>
+
+              <v-btn
+                color="grey"
+                variant="text"
+                size="small"
+                class="text-none"
+                @click="selected = []"
+              >
+                Clear
+              </v-btn>
+            </div>
+          </v-slide-x-transition>
 
           <v-spacer></v-spacer>
 
@@ -107,7 +154,7 @@
       </template>
     </v-data-table>
 
-    <!-- Confirmation Dialog -->
+    <!-- Single Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="400px">
       <v-card>
         <v-card-title class="text-h5 bg-error text-white py-4">
@@ -132,11 +179,51 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Batch Delete Confirmation Dialog -->
+    <v-dialog v-model="batchDeleteDialog" max-width="500px">
+      <v-card>
+        <v-card-title class="text-h5 bg-error text-white py-4">
+          Confirm Batch Delete
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <p>
+            Are you sure you want to delete {{ selected.length }} selected
+            {{ selected.length === 1 ? "item" : "items" }}? This action cannot
+            be undone.
+          </p>
+          <v-alert
+            v-if="selected.length > 5"
+            color="warning"
+            variant="tonal"
+            icon="mdi-alert"
+            class="mt-4"
+            density="compact"
+          >
+            You are about to delete a large number of items!
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="grey-darken-1"
+            variant="text"
+            @click="batchDeleteDialog = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn color="error" @click="handleBatchDelete">
+            Delete {{ selected.length }}
+            {{ selected.length === 1 ? "Item" : "Items" }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 const props = defineProps({
   title: {
@@ -209,25 +296,55 @@ const props = defineProps({
   },
   serverSidePagination: {
     type: Boolean,
-    default: false
+    default: false,
   },
   totalItems: {
     type: Number,
-    default: 0
+    default: 0,
   },
   onPageChange: {
     type: Function,
-    default: () => {}
-  }
+    default: () => {},
+  },
+  showSelection: {
+    type: Boolean,
+    default: false,
+  },
+  itemValuePath: {
+    type: String,
+    default: "item_id",
+  },
 });
 
-const emit = defineEmits(["add", "edit", "delete"]);
-const page = ref(1);
-const itemsPerPage = ref(props.itemsPerPage);
+const emit = defineEmits([
+  "add",
+  "edit",
+  "delete",
+  "batchDelete",
+  "batchEdit",
+  "pageChange",
+  "selectionChange",
+]);
 
+const page = ref(1);
 const search = ref("");
 const deleteDialog = ref(false);
+const batchDeleteDialog = ref(false);
 const itemToDelete = ref(null);
+const selected = ref([]);
+
+watch(selected, (newVal) => {
+  emit("selectionChange", newVal);
+});
+
+const getSelectedItems = () => {
+  const itemMap = {};
+  props.items.forEach((item) => {
+    itemMap[item[props.itemValuePath]] = item;
+  });
+
+  return selected.value.map((id) => itemMap[id]).filter((item) => item);
+};
 
 function confirmDelete(item) {
   deleteDialog.value = true;
@@ -240,10 +357,21 @@ function handleDelete() {
   itemToDelete.value = null;
 }
 
+function confirmBatchDelete() {
+  if (selected.value.length === 0) return;
+  batchDeleteDialog.value = true;
+}
+
+function handleBatchDelete() {
+  emit("batchDelete", getSelectedItems());
+  batchDeleteDialog.value = false;
+  selected.value = [];
+}
+
 function handlePageChange(newPage) {
   page.value = newPage;
   if (props.serverSidePagination) {
-    emit('pageChange', { page: newPage, itemsPerPage: itemsPerPage.value });
+    emit("pageChange", { page: newPage, itemsPerPage: props.itemsPerPage });
   }
 }
 </script>
