@@ -85,12 +85,19 @@ const router = createRouter({
   routes,
 });
 
+let permissionsLoaded = false;
+
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
   const notificationStore = useNotificationStore();
 
   if (!userStore.isAuthenticated) {
     await userStore.initialize();
+
+    if (userStore.isAuthenticated && !permissionsLoaded) {
+      await userStore.fetchPermissions();
+      permissionsLoaded = true;
+    }
   }
 
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {
@@ -101,22 +108,20 @@ router.beforeEach(async (to, from, next) => {
     });
   }
 
-  if (
-    to.meta.requiredPermission &&
-    !userStore.hasPermission(to.meta.requiredPermission)
-  ) {
-    if (userStore.isAuthenticated) {
+  if (to.meta.requiredPermission && userStore.isAuthenticated) {
+    if (!permissionsLoaded) {
+      await userStore.fetchPermissions();
+      permissionsLoaded = true;
+    }
+
+    if (!userStore.hasPermission(to.meta.requiredPermission)) {
       notificationStore.warning(
         "You do not have permission to access this page"
       );
 
       if (to.path !== "/dashboard") {
         return next("/dashboard");
-      } else {
-        return next();
       }
-    } else {
-      return next("/login");
     }
   }
 

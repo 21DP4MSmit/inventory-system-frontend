@@ -7,22 +7,31 @@ export const useUserStore = defineStore("user", () => {
   const user = ref(null);
   const token = ref(null);
   const permissions = ref([]);
+  const permissionsLoaded = ref(false);
 
   const isAuthenticated = computed(() => !!token.value);
   const isAdmin = computed(() => user.value?.role === "admin");
   const getUserInfo = computed(() => user.value);
 
-  const hasPermission = computed(() => (permission) => {
+  function hasPermission(permission) {
+    if (isAdmin.value) return true;
+
     return permissions.value.includes(permission);
-  });
+  }
 
   async function fetchPermissions() {
     try {
+      if (!token.value) {
+        return [];
+      }
+
       const response = await api.get("/permissions");
-      permissions.value = response.data.permissions;
+      permissions.value = response.data.permissions || [];
+      permissionsLoaded.value = true;
       return permissions.value;
     } catch (error) {
       console.error("Error fetching permissions:", error);
+      permissions.value = [];
       return [];
     }
   }
@@ -54,6 +63,7 @@ export const useUserStore = defineStore("user", () => {
     token.value = null;
     user.value = null;
     permissions.value = [];
+    permissionsLoaded.value = false;
     localStorage.removeItem("token");
     delete api.defaults.headers.common["Authorization"];
 
@@ -70,7 +80,6 @@ export const useUserStore = defineStore("user", () => {
       try {
         const decodedUser = decodeJWT(savedToken);
         if (decodedUser) {
-
           user.value = {
             id: decodedUser.sub,
             username: decodedUser.username,

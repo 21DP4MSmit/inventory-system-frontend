@@ -1,6 +1,92 @@
 <template>
-  <div class="data-table-wrapper">
+  <div class="responsive-data-table">
+    <!-- Mobile Card View -->
+    <div v-if="isMobileView" class="mobile-card-view">
+      <v-card
+        v-for="(item, index) in items"
+        :key="index"
+        class="mb-4 mobile-data-card"
+        elevation="1"
+        :class="{ 'selected-card': isItemSelected(item) }"
+      >
+        <div class="d-flex align-center px-4 py-3 card-header">
+          <v-checkbox
+            v-if="showSelection"
+            :model-value="isItemSelected(item)"
+            @update:model-value="toggleItemSelection(item)"
+            density="compact"
+            hide-details
+          ></v-checkbox>
+
+          <!-- Show primary field as card title -->
+          <span class="text-subtitle-1 font-weight-bold">
+            {{ getPrimaryField(item) }}
+          </span>
+
+          <v-spacer></v-spacer>
+
+          <!-- Actions buttons -->
+          <div v-if="showActions">
+            <v-btn
+              v-if="showEditButton"
+              icon="mdi-pencil"
+              variant="text"
+              :color="editButtonColor"
+              size="small"
+              class="mr-1"
+              @click="$emit('edit', item)"
+            ></v-btn>
+            <v-btn
+              v-if="showDeleteButton"
+              icon="mdi-delete"
+              variant="text"
+              :color="deleteButtonColor"
+              size="small"
+              @click="$emit('delete', item)"
+            ></v-btn>
+          </div>
+        </div>
+
+        <v-divider></v-divider>
+
+        <!-- Item details as list -->
+        <v-list density="compact" class="pa-0">
+          <v-list-item
+            v-for="header in mobileVisibleHeaders"
+            :key="header.key"
+            class="px-4"
+          >
+            <template v-slot:prepend>
+              <span class="text-caption text-medium-emphasis"
+                >{{ header.title }}:</span
+              >
+            </template>
+            <v-list-item-title class="text-body-2">
+              <slot
+                v-if="$slots[`item.${header.key}`]"
+                :name="`item.${header.key}`"
+                :item="item"
+              ></slot>
+              <span v-else>{{ item[header.key] }}</span>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-card>
+
+      <!-- Empty state -->
+      <slot v-if="items.length === 0" name="no-data">
+        <div class="pa-6 text-center">
+          <v-icon size="48" color="grey-lighten-1" class="mb-3">
+            {{ noDataIcon }}
+          </v-icon>
+          <p>{{ noDataText }}</p>
+        </div>
+      </slot>
+    </div>
+
+    <!-- Desktop Table View -->
     <v-data-table
+      v-else
       v-model="selected"
       :headers="headers"
       :items="items"
@@ -14,93 +100,95 @@
       density="comfortable"
     >
       <template v-slot:top>
-        <v-toolbar flat class="border-b px-4 table-toolbar">
-          <v-toolbar-title
-            class="text-subtitle-1 font-weight-medium d-flex align-center"
-          >
-            <v-icon v-if="icon" :icon="icon" class="mr-2" size="20"></v-icon>
-            {{ title }}
-            <v-chip
-              v-if="items && items.length"
-              size="small"
-              color="primary"
-              variant="tonal"
-              class="ml-2"
+        <slot name="table-top">
+          <v-toolbar flat class="border-b px-4 table-toolbar">
+            <v-toolbar-title
+              class="text-subtitle-1 font-weight-medium d-flex align-center"
             >
-              {{ items.length }}
-            </v-chip>
-          </v-toolbar-title>
-
-          <!-- Batch actions toolbar -->
-          <v-slide-x-transition>
-            <div
-              v-if="showSelection && selected.length > 0"
-              class="d-flex align-center ml-4"
-            >
-              <v-chip color="primary" size="small" class="mr-3">
-                {{ selected.length }} selected
-              </v-chip>
-
-              <v-btn
+              <v-icon v-if="icon" :icon="icon" class="mr-2" size="20"></v-icon>
+              {{ title }}
+              <v-chip
+                v-if="items && items.length"
+                size="small"
                 color="primary"
                 variant="tonal"
-                size="small"
-                class="mr-2 text-none"
-                @click="$emit('batchEdit', getSelectedItems())"
+                class="ml-2"
               >
-                <v-icon size="small" class="mr-1">mdi-pencil</v-icon>
-                Edit
-              </v-btn>
+                {{ items.length }}
+              </v-chip>
+            </v-toolbar-title>
 
-              <v-btn
-                color="error"
-                variant="tonal"
-                size="small"
-                class="mr-2 text-none"
-                @click="confirmBatchDelete"
+            <!-- Batch actions toolbar -->
+            <v-slide-x-transition>
+              <div
+                v-if="showSelection && selected.length > 0"
+                class="d-flex align-center ml-4"
               >
-                <v-icon size="small" class="mr-1">mdi-delete</v-icon>
-                Delete
-              </v-btn>
+                <v-chip color="primary" size="small" class="mr-3">
+                  {{ selected.length }} selected
+                </v-chip>
 
-              <v-btn
-                color="grey"
-                variant="text"
-                size="small"
-                class="text-none"
-                @click="selected = []"
-              >
-                Clear
-              </v-btn>
-            </div>
-          </v-slide-x-transition>
+                <v-btn
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                  class="mr-2 text-none"
+                  @click="$emit('batchEdit', getSelectedItems())"
+                >
+                  <v-icon size="small" class="mr-1">mdi-pencil</v-icon>
+                  Edit
+                </v-btn>
 
-          <v-spacer></v-spacer>
+                <v-btn
+                  color="error"
+                  variant="tonal"
+                  size="small"
+                  class="mr-2 text-none"
+                  @click="$emit('batchDelete', getSelectedItems())"
+                >
+                  <v-icon size="small" class="mr-1">mdi-delete</v-icon>
+                  Delete
+                </v-btn>
 
-          <v-text-field
-            v-if="showSearch"
-            v-model="search"
-            append-inner-icon="mdi-magnify"
-            label="Search"
-            hide-details
-            density="compact"
-            variant="outlined"
-            class="search-field mx-2"
-            style="max-width: 250px"
-          ></v-text-field>
+                <v-btn
+                  color="grey"
+                  variant="text"
+                  size="small"
+                  class="text-none"
+                  @click="selected = []"
+                >
+                  Clear
+                </v-btn>
+              </div>
+            </v-slide-x-transition>
 
-          <v-btn
-            v-if="showAddButton"
-            :color="addButtonColor"
-            @click="$emit('add')"
-            class="text-none ml-2"
-            variant="elevated"
-            density="comfortable"
-          >
-            <v-icon class="mr-1" icon="mdi-plus"></v-icon>
-            {{ addButtonText }}
-          </v-btn>
-        </v-toolbar>
+            <v-spacer></v-spacer>
+
+            <v-text-field
+              v-if="showSearch"
+              v-model="search"
+              append-inner-icon="mdi-magnify"
+              label="Search"
+              hide-details
+              density="compact"
+              variant="outlined"
+              class="search-field mx-2"
+              style="max-width: 250px"
+            ></v-text-field>
+
+            <v-btn
+              v-if="showAddButton"
+              :color="addButtonColor"
+              @click="$emit('add')"
+              class="text-none ml-2"
+              variant="elevated"
+              density="comfortable"
+            >
+              <v-icon class="mr-1" icon="mdi-plus"></v-icon>
+              {{ addButtonText }}
+            </v-btn>
+          </v-toolbar>
+        </slot>
       </template>
 
       <template
@@ -137,7 +225,7 @@
                 variant="text"
                 :color="deleteButtonColor"
                 size="small"
-                @click="confirmDelete(item)"
+                @click="$emit('delete', item)"
               ></v-btn>
             </template>
           </v-tooltip>
@@ -145,85 +233,31 @@
       </template>
 
       <template v-slot:no-data>
-        <div class="pa-6 text-center">
-          <v-icon size="48" color="grey-lighten-1" class="mb-3">{{
-            noDataIcon
-          }}</v-icon>
-          <p>{{ noDataText }}</p>
-        </div>
+        <slot name="no-data">
+          <div class="pa-6 text-center">
+            <v-icon size="48" color="grey-lighten-1" class="mb-3">
+              {{ noDataIcon }}
+            </v-icon>
+            <p>{{ noDataText }}</p>
+          </div>
+        </slot>
       </template>
     </v-data-table>
 
-    <!-- Single Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="400px">
-      <v-card>
-        <v-card-title class="text-h5 bg-error text-white py-4">
-          Confirm Delete
-        </v-card-title>
-        <v-card-text class="pt-4">
-          <p>
-            Are you sure you want to delete this item? This action cannot be
-            undone.
-          </p>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="grey-darken-1"
-            variant="text"
-            @click="deleteDialog = false"
-          >
-            Cancel
-          </v-btn>
-          <v-btn color="error" @click="handleDelete"> Delete </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Batch Delete Confirmation Dialog -->
-    <v-dialog v-model="batchDeleteDialog" max-width="500px">
-      <v-card>
-        <v-card-title class="text-h5 bg-error text-white py-4">
-          Confirm Batch Delete
-        </v-card-title>
-        <v-card-text class="pt-4">
-          <p>
-            Are you sure you want to delete {{ selected.length }} selected
-            {{ selected.length === 1 ? "item" : "items" }}? This action cannot
-            be undone.
-          </p>
-          <v-alert
-            v-if="selected.length > 5"
-            color="warning"
-            variant="tonal"
-            icon="mdi-alert"
-            class="mt-4"
-            density="compact"
-          >
-            You are about to delete a large number of items!
-          </v-alert>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="grey-darken-1"
-            variant="text"
-            @click="batchDeleteDialog = false"
-          >
-            Cancel
-          </v-btn>
-          <v-btn color="error" @click="handleBatchDelete">
-            Delete {{ selected.length }}
-            {{ selected.length === 1 ? "Item" : "Items" }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <v-btn
+      v-if="isMobileView && showAddButton"
+      color="primary"
+      icon="mdi-plus"
+      class="floating-add-btn"
+      elevation="4"
+      size="large"
+      @click="$emit('add')"
+    ></v-btn>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 
 const props = defineProps({
   title: {
@@ -294,18 +328,6 @@ const props = defineProps({
     type: String,
     default: "mdi-alert-circle-outline",
   },
-  serverSidePagination: {
-    type: Boolean,
-    default: false,
-  },
-  totalItems: {
-    type: Number,
-    default: 0,
-  },
-  onPageChange: {
-    type: Function,
-    default: () => {},
-  },
   showSelection: {
     type: Boolean,
     default: false,
@@ -314,24 +336,49 @@ const props = defineProps({
     type: String,
     default: "item_id",
   },
+  primaryField: {
+    type: String,
+    default: "",
+  },
+  mobilePriorityFields: {
+    type: Array,
+    default: () => [],
+  },
+  showActions: {
+    type: Boolean,
+    default: true,
+  },
+  mobileBreakpoint: {
+    type: Number,
+    default: 768,
+  },
 });
 
 const emit = defineEmits([
   "add",
   "edit",
   "delete",
-  "batchDelete",
   "batchEdit",
-  "pageChange",
+  "batchDelete",
   "selectionChange",
 ]);
 
-const page = ref(1);
 const search = ref("");
-const deleteDialog = ref(false);
-const batchDeleteDialog = ref(false);
-const itemToDelete = ref(null);
 const selected = ref([]);
+const windowWidth = ref(window.innerWidth);
+const isMobileView = computed(() => windowWidth.value < props.mobileBreakpoint);
+
+const handleResize = () => {
+  windowWidth.value = window.innerWidth;
+};
+
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", handleResize);
+});
 
 watch(selected, (newVal) => {
   emit("selectionChange", newVal);
@@ -346,37 +393,91 @@ const getSelectedItems = () => {
   return selected.value.map((id) => itemMap[id]).filter((item) => item);
 };
 
-function confirmDelete(item) {
-  deleteDialog.value = true;
-  itemToDelete.value = item;
-}
+const isItemSelected = (item) => {
+  return selected.value.includes(item[props.itemValuePath]);
+};
 
-function handleDelete() {
-  emit("delete", itemToDelete.value);
-  deleteDialog.value = false;
-  itemToDelete.value = null;
-}
+const toggleItemSelection = (item) => {
+  const itemId = item[props.itemValuePath];
+  const index = selected.value.indexOf(itemId);
 
-function confirmBatchDelete() {
-  if (selected.value.length === 0) return;
-  batchDeleteDialog.value = true;
-}
-
-function handleBatchDelete() {
-  emit("batchDelete", getSelectedItems());
-  batchDeleteDialog.value = false;
-  selected.value = [];
-}
-
-function handlePageChange(newPage) {
-  page.value = newPage;
-  if (props.serverSidePagination) {
-    emit("pageChange", { page: newPage, itemsPerPage: props.itemsPerPage });
+  if (index === -1) {
+    selected.value.push(itemId);
+  } else {
+    selected.value.splice(index, 1);
   }
-}
+};
+
+const getPrimaryField = (item) => {
+  if (props.primaryField) {
+    return item[props.primaryField];
+  }
+
+  const nameField = Object.keys(item).find((key) =>
+    ["name", "title", "label", "id"].includes(key.toLowerCase())
+  );
+
+  return nameField ? item[nameField] : `Item ${item[props.itemValuePath]}`;
+};
+
+const mobileVisibleHeaders = computed(() => {
+  if (props.mobilePriorityFields && props.mobilePriorityFields.length > 0) {
+    return props.headers.filter((h) =>
+      props.mobilePriorityFields.includes(h.key)
+    );
+  }
+
+  const filteredHeaders = props.headers.filter(
+    (h) =>
+      h.key !== "actions" &&
+      h.key !== props.primaryField &&
+      h.key !== props.itemValuePath
+  );
+
+  return filteredHeaders.slice(0, 4);
+});
 </script>
 
 <style scoped>
+.responsive-data-table {
+  position: relative;
+}
+
+.mobile-card-view {
+  padding-bottom: 80px;
+}
+
+.mobile-data-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.mobile-data-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.selected-card {
+  border: 2px solid var(--primary-color);
+}
+
+.floating-add-btn {
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  z-index: 99;
+}
+
+@media (max-width: 600px) {
+  .floating-add-btn {
+    bottom: 80px;
+  }
+}
+
 .data-table-wrapper {
   border-radius: var(--card-border-radius);
   overflow: hidden;

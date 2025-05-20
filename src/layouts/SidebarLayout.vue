@@ -1,12 +1,24 @@
 <template>
   <div>
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav d-md-none">
+      <v-bottom-navigation bg-color="sidebar-gradient" color="white">
+        <v-btn v-for="item in mobileMenuItems" :key="item.path" :to="item.path">
+          <v-icon>{{ item.icon }}</v-icon>
+          <span class="text-caption">{{ item.title }}</span>
+        </v-btn>
+      </v-bottom-navigation>
+    </div>
+
+    <!-- Desktop Sidebar -->
     <v-navigation-drawer
       v-model="isDrawerOpen"
       :rail="rail"
       location="left"
       elevation="2"
-      class="sidebar-gradient"
+      class="sidebar-gradient d-none d-md-block full-height-sidebar"
       @update:rail="handleRailUpdate"
+      permanent
     >
       <!-- Inventory System Title -->
       <v-list-item
@@ -96,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "../stores/user";
 
@@ -143,6 +155,18 @@ const menuItems = computed(() => {
   return items;
 });
 
+const mobileMenuItems = computed(() => {
+  const essentialItems = [
+    { title: "Dashboard", path: "/dashboard", icon: "mdi-view-dashboard" },
+    { title: "Inventory", path: "/inventory", icon: "mdi-clipboard-list" },
+    { title: "Transactions", path: "/transactions", icon: "mdi-history" },
+    { title: "AI Detection", path: "/ai-detection", icon: "mdi-image-search" },
+    { title: "Profile", path: "/profile", icon: "mdi-account" },
+  ];
+
+  return essentialItems;
+});
+
 const toggleRail = () => {
   if (rail.value) {
     rail.value = false;
@@ -176,9 +200,37 @@ const logout = () => {
   userStore.logout();
   router.push("/login");
 };
+
+const updateSidebarHeight = () => {
+  const vh = window.innerHeight;
+  document.documentElement.style.setProperty("--viewport-height", `${vh}px`);
+};
+
+onMounted(() => {
+  updateSidebarHeight();
+  window.addEventListener("resize", updateSidebarHeight);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateSidebarHeight);
+});
 </script>
 
 <style scoped>
+:root {
+  --viewport-height: 100vh;
+}
+
+.full-height-sidebar {
+  height: var(--viewport-height) !important;
+  max-height: var(--viewport-height) !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+
 .sidebar-gradient {
   background: linear-gradient(
     145deg,
@@ -210,5 +262,41 @@ const logout = () => {
 .v-list-item:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   transition: background-color 0.3s ease;
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  :deep(.v-main) {
+    padding-bottom: 56px !important;
+  }
+
+  .full-height-sidebar {
+    height: auto !important;
+    max-height: none !important;
+    position: relative;
+  }
+}
+
+@media (max-width: 600px) {
+  .v-bottom-navigation .v-btn {
+    min-width: 0 !important;
+  }
+
+  .v-bottom-navigation .v-btn .v-btn__content {
+    flex-direction: column;
+  }
+
+  .v-bottom-navigation .v-btn .v-btn__content span {
+    margin-top: 4px;
+    font-size: 0.625rem !important;
+  }
 }
 </style>
