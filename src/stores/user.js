@@ -69,13 +69,20 @@ export const useUserStore = defineStore("user", () => {
       api.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
       try {
         const decodedUser = decodeJWT(savedToken);
-        if (decodedUser && decodedUser.role) {
-          user.value = decodedUser;
+        if (decodedUser) {
+
+          user.value = {
+            id: decodedUser.sub,
+            username: decodedUser.username,
+            role: decodedUser.role,
+          };
+
           await fetchPermissions();
         } else {
           logout();
         }
       } catch (error) {
+        console.error("Error initializing user store:", error);
         logout();
       }
     }
@@ -91,9 +98,10 @@ export const useUserStore = defineStore("user", () => {
           .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
           .join("")
       );
-      return JSON.parse(jsonPayload);
+
+      const decoded = JSON.parse(jsonPayload);
+      return decoded;
     } catch (error) {
-      console.error("Error decoding JWT:", error);
       return null;
     }
   }

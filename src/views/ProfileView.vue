@@ -406,9 +406,15 @@ const updatePassword = async () => {
 
   try {
     formLoading.value = true;
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    await api.put(`/users/${userInfo.value.id}/password`, {
+    const userId = userInfo.value?.id;
+    if (!userId) {
+      formError.value =
+        "User ID is not available. Please reload the page or log in again.";
+      return;
+    }
+
+    await api.put(`/users/${userId}/password`, {
       currentPassword: passwordForm.currentPassword,
       newPassword: passwordForm.newPassword,
     });
@@ -425,9 +431,13 @@ const updatePassword = async () => {
   } catch (error) {
     console.error("Error updating password:", error);
 
-    if (!error.response) {
+    if (error.response?.status === 401) {
+      formError.value = "Current password is incorrect";
+    } else if (error.response?.status === 422) {
       formError.value =
-        "Network error. This might be due to CORS restrictions. Please try again later.";
+        error.response.data.error || "Password validation failed";
+    } else if (!error.response) {
+      formError.value = "Network error. Unable to connect to the server.";
     } else {
       formError.value =
         error.response?.data?.error ||

@@ -10,9 +10,11 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const publicRoutes = ['/items', '/categories'];
-    const isPublicRoute = publicRoutes.some(route => config.url.includes(route) && config.method === 'get');
-    
+    const publicRoutes = ["/items", "/categories"];
+    const isPublicRoute = publicRoutes.some(
+      (route) => config.url.includes(route) && config.method === "get"
+    );
+
     if (!isPublicRoute) {
       const userStore = useUserStore();
       const token = userStore.token || localStorage.getItem("token");
@@ -36,7 +38,7 @@ api.interceptors.response.use(
 
     const userStore = useUserStore();
 
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && error.config.url !== "/login") {
       console.warn("Unauthorized - Logging out user");
       userStore.logout();
       if (window.location.pathname !== "/login") {

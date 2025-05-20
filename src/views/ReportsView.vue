@@ -61,55 +61,63 @@
                   clearable
                 ></v-select>
 
-                <v-row>
-                  <v-col cols="6">
-                    <v-menu
-                      v-model="startDateMenu"
-                      :close-on-content-click="false"
-                      location="bottom"
+                <div class="mb-4">
+                  <label class="text-body-2 mb-1 d-block">Date Range</label>
+                  <div class="d-flex align-center">
+                    <div
+                      class="date-display border pa-2 rounded mr-2 flex-grow-1"
+                      @click="showStartDatePicker = true"
                     >
-                      <template v-slot:activator="{ props }">
-                        <v-text-field
-                          v-model="startDate"
-                          label="Start Date"
-                          prepend-icon="mdi-calendar"
-                          readonly
-                          v-bind="props"
-                          density="comfortable"
-                          variant="outlined"
-                        ></v-text-field>
-                      </template>
+                      {{ formatDateDisplay(startDate) || "Select start date" }}
+                    </div>
+                    <span class="px-2">to</span>
+                    <div
+                      class="date-display border pa-2 rounded ml-2 flex-grow-1"
+                      @click="showEndDatePicker = true"
+                    >
+                      {{ formatDateDisplay(endDate) || "Select end date" }}
+                    </div>
+                  </div>
+                </div>
+
+                <v-dialog v-model="showStartDatePicker" width="auto">
+                  <v-card>
+                    <v-card-title class="pb-0">Select Start Date</v-card-title>
+                    <v-card-text>
                       <v-date-picker
                         v-model="startDate"
-                        @update:model-value="startDateMenu = false"
+                        @update:model-value="showStartDatePicker = false"
                       ></v-date-picker>
-                    </v-menu>
-                  </v-col>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        color="primary"
+                        @click="showStartDatePicker = false"
+                      >
+                        Close
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
 
-                  <v-col cols="6">
-                    <v-menu
-                      v-model="endDateMenu"
-                      :close-on-content-click="false"
-                      location="bottom"
-                    >
-                      <template v-slot:activator="{ props }">
-                        <v-text-field
-                          v-model="endDate"
-                          label="End Date"
-                          prepend-icon="mdi-calendar"
-                          readonly
-                          v-bind="props"
-                          density="comfortable"
-                          variant="outlined"
-                        ></v-text-field>
-                      </template>
+                <v-dialog v-model="showEndDatePicker" width="auto">
+                  <v-card>
+                    <v-card-title class="pb-0">Select End Date</v-card-title>
+                    <v-card-text>
                       <v-date-picker
                         v-model="endDate"
-                        @update:model-value="endDateMenu = false"
+                        @update:model-value="showEndDatePicker = false"
                       ></v-date-picker>
-                    </v-menu>
-                  </v-col>
-                </v-row>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn color="primary" @click="showEndDatePicker = false">
+                        Close
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
 
                 <v-btn
                   block
@@ -203,7 +211,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useNotificationStore } from "../stores/notification";
 import { useUserStore } from "../stores/user";
 import api from "../api.js";
@@ -220,12 +228,16 @@ const reportType = ref("inventory");
 const reportFormat = ref("pdf");
 const selectedCategory = ref(null);
 const transactionType = ref(null);
-const startDate = ref(
-  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().substr(0, 10)
-);
-const endDate = ref(new Date().toISOString().substr(0, 10));
-const startDateMenu = ref(false);
-const endDateMenu = ref(false);
+
+const today = new Date();
+const thirtyDaysAgo = new Date();
+thirtyDaysAgo.setDate(today.getDate() - 30);
+
+const startDate = ref(thirtyDaysAgo);
+const endDate = ref(today);
+
+const showStartDatePicker = ref(false);
+const showEndDatePicker = ref(false);
 
 const categories = ref([]);
 const generating = ref(false);
@@ -251,6 +263,37 @@ const transactionTypes = [
   { title: "Stock In", value: "in" },
   { title: "Stock Out", value: "out" },
 ];
+
+function formatYYYYMMDD(date) {
+  if (!date) return "";
+
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateDisplay(date) {
+  if (!date) return "";
+
+  try {
+    const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return "";
+
+    return d.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch (e) {
+    console.error("Date formatting error:", e);
+    return "";
+  }
+}
 
 async function fetchCategories() {
   try {
@@ -288,16 +331,9 @@ function getReportTitle() {
 }
 
 function formatDateRange() {
-  return `${formatDate(startDate.value)} - ${formatDate(endDate.value)}`;
-}
-
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return `${formatDateDisplay(startDate.value)} - ${formatDateDisplay(
+    endDate.value
+  )}`;
 }
 
 async function generateReport() {
@@ -306,13 +342,19 @@ async function generateReport() {
     return;
   }
 
+  if (!startDate.value || !endDate.value) {
+    notificationStore.error("Please select both start and end dates");
+    return;
+  }
+
   generating.value = true;
+  reportData.value = null;
 
   try {
     const params = {
       reportType: reportType.value,
-      startDate: startDate.value,
-      endDate: endDate.value,
+      startDate: formatYYYYMMDD(startDate.value),
+      endDate: formatYYYYMMDD(endDate.value),
     };
 
     if (reportType.value === "category" && selectedCategory.value) {
@@ -326,7 +368,7 @@ async function generateReport() {
     const response = await api.get("/generate-report", { params });
     reportData.value = response.data;
 
-    if (reportData.value.chartData) {
+    if (reportData.value?.chartData) {
       setTimeout(() => {
         createChart();
       }, 100);
@@ -343,6 +385,11 @@ async function generateReport() {
 }
 
 function createChart() {
+  if (!chartCanvas.value) {
+    console.warn("Chart canvas not found");
+    return;
+  }
+
   if (chartInstance.value) {
     chartInstance.value.destroy();
   }
@@ -350,47 +397,57 @@ function createChart() {
   const ctx = chartCanvas.value.getContext("2d");
   const chartData = reportData.value.chartData;
 
-  chartInstance.value = new Chart(ctx, {
-    type: chartData.type || "bar",
-    data: {
-      labels: chartData.labels,
-      datasets: chartData.datasets,
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: "top",
-          labels: {
-            color: "#fff",
+  if (!chartData || !chartData.labels || !chartData.datasets) {
+    console.warn("Invalid chart data", chartData);
+    return;
+  }
+
+  try {
+    chartInstance.value = new Chart(ctx, {
+      type: chartData.type || "bar",
+      data: {
+        labels: chartData.labels,
+        datasets: chartData.datasets,
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "top",
+            labels: {
+              color: "#fff",
+            },
+          },
+          tooltip: {
+            mode: "index",
+            intersect: false,
           },
         },
-        tooltip: {
-          mode: "index",
-          intersect: false,
+        scales: {
+          x: {
+            grid: {
+              color: "rgba(255, 255, 255, 0.1)",
+            },
+            ticks: {
+              color: "#b0bec5",
+            },
+          },
+          y: {
+            grid: {
+              color: "rgba(255, 255, 255, 0.1)",
+            },
+            ticks: {
+              color: "#b0bec5",
+            },
+          },
         },
       },
-      scales: {
-        x: {
-          grid: {
-            color: "rgba(255, 255, 255, 0.1)",
-          },
-          ticks: {
-            color: "#b0bec5",
-          },
-        },
-        y: {
-          grid: {
-            color: "rgba(255, 255, 255, 0.1)",
-          },
-          ticks: {
-            color: "#b0bec5",
-          },
-        },
-      },
-    },
-  });
+    });
+  } catch (e) {
+    console.error("Error creating chart:", e);
+    notificationStore.error("Error creating chart visualization");
+  }
 }
 
 async function downloadReport() {
@@ -399,8 +456,8 @@ async function downloadReport() {
   try {
     const params = {
       reportType: reportType.value,
-      startDate: startDate.value,
-      endDate: endDate.value,
+      startDate: formatYYYYMMDD(startDate.value),
+      endDate: formatYYYYMMDD(endDate.value),
       format: reportFormat.value,
     };
 
@@ -470,5 +527,28 @@ onMounted(() => {
 
 .report-preview {
   min-height: 300px;
+}
+
+.date-display {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: all 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.date-display:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.border {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.rounded {
+  border-radius: 8px;
 }
 </style>
