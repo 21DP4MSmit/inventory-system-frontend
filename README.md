@@ -10,7 +10,7 @@ This is the Vue.js frontend for the Inventory Management System.
 
 ## Setup
 1. Clone the repository:
-   git clone https://github.com/yourusername/inventory-system-frontend.git
+   git clone https://github.com/21DP4MSmit/inventory-system-frontend.git
 2. Install dependencies:
     yarn install
 3. Start the dev server:
