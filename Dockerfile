@@ -2,13 +2,13 @@ FROM node:18-alpine as build-stage
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package*.json yarn.lock ./
 
-RUN npm ci --only=production
+RUN yarn install --frozen-lockfile
 
 COPY . .
 
-RUN npm run build
+RUN yarn build
 
 FROM nginx:alpine as production-stage
 
