@@ -2,7 +2,7 @@ import axios from "axios";
 import { useUserStore } from "./stores/user";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://inventory-backend-eu1-1085714355169.europe-west1.run.app/api",
+  baseURL: import.meta.env.VITE_API_URL || "https://api.onlyschool.id.lv/api",
   headers: {
     "Content-Type": "application/json",
   },
